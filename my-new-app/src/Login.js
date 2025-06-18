@@ -1,22 +1,101 @@
-import React from 'react';
+import React, { useState } from "react";
 
 function Login() {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState(null);
+
+  const handleChange = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+
+    
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: ''
+    }));
+  };
+
+  const validate = () => {
+    let isValid = true;
+    let newErrors = {};
+
+    if (formData.username.trim() === '') {
+      isValid = false;
+      newErrors.username = "Username is mandatory";
+    }
+
+    if (formData.password.trim() === '') {
+      isValid = false;
+      newErrors.password = "Password is mandatory";
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (validate()) {
+      if (
+        formData.username === 'atul' &&
+        formData.password === 'atul'
+      ) {
+        setMessage(" Valid Credentials");
+      } else {
+        setMessage("Invalid Credentials");
+      }
+    } else {
+      setMessage(null); 
+    }
+  };
+
   return (
-    <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-      <div className="card-body">
-        <h4 className="card-title text-center mb-4">Login</h4>
-        <form>
-          <div className="mb-3">
-            <label className="form-label">Username</label>
-            <input type="text" className="form-control" placeholder="Enter username" />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input type="password" className="form-control" placeholder="Enter password" />
-          </div>
-          <button type="submit" className="btn btn-primary w-100">Login</button>
-        </form>
-      </div>
+    <div className="container text-center">
+      {message && <p style={{ fontWeight: "bold" }}>{message}</p>}
+
+      <h1>Login Page</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Username:</label><br />
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+          />
+          {errors.username && (
+            <p style={{ color: "red" }}>{errors.username}</p>
+          )}
+        </div>
+
+        <div>
+          <label>Password:</label><br />
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+          />
+          {errors.password && (
+            <p style={{ color: "red" }}>{errors.password}</p>
+          )}
+        </div>
+
+        <div style={{ marginTop: "10px" }}>
+          <button type="submit">Submit</button>
+        </div>
+      </form>
     </div>
   );
 }
