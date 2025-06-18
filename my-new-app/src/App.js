@@ -11,6 +11,7 @@ function App() {
       <nav className="mb-4">
         <Link className="btn btn-outline-primary me-2" to="/">Home</Link>
         <Link className="btn btn-outline-success" to="/login">Login</Link>
+        <Link className="btn btn-outline-success" to="/login">Login</Link>
       </nav>
 
       <Routes>
