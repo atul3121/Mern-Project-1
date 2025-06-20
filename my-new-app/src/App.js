@@ -1,25 +1,39 @@
-
-import './App.css';
-import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import Home from './Home';
-import Login from './Login';
-import AppLayout from './layout/AppLayout';
+import "./App.css";
+import React, { useState } from "react";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
+import Home from "./Home";
+import Login from "./Login";
+import AppLayout from "./layout/AppLayout";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
-  return (
-  // <div className="container mt-4">
-  //     {/* <nav className="mb-4">
-  //       <Link to="/">Home</Link><br></br>
-  //       <Link to="/login">Login</Link>
-  //     </nav> */}
+  const [userDetails, setUserDetails] = useState(null);
 
-      <Routes>
-        {/* <Route path="/" element={<Home />} /> */}
-        <Route path="/" element={<AppLayout><Home/></AppLayout>} />
-        <Route path="/login" element={<AppLayout><Login/></AppLayout>} />
-      </Routes>
-    // </div>
+  const updateUserDetails = (updateUserDetails) => {
+    setUserDetails(updateUserDetails);
+  };
+
+  return (
+    <Routes>
+      <Route path="/" element={userDetails ? 
+      <Navigate to="/dashboard" /> :
+          <AppLayout>
+            <Home />
+          </AppLayout> 
+        }
+      />
+      <Route path="/login" element={userDetails ? 
+      <Navigate to="/dashboard"/> :
+          <AppLayout>
+            <Login updateUserDetails={updateUserDetails} />
+          </AppLayout>
+        }
+      />
+      <Route path="/dashboard" element={userDetails ?
+        <Dashboard /> :
+        <Navigate to="/login" />
+      } />
+    </Routes>
   );
 }
 

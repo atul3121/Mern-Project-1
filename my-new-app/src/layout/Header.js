@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 function Header() {
   return (
     <div>
-        <Link to="/">Home</Link>
-        <Link to="/Login">Login</Link>
+         <Link to="/" style={{ marginRight: '10px' }}>Home</Link>
+         <Link to="/Login">Login</Link>
     </div>
   )
 }
