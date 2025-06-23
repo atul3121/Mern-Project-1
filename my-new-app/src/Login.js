@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function Login( {updateUserDetails } ) {
+function Login({ updateUserDetails }) {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -8,6 +10,7 @@ function Login( {updateUserDetails } ) {
 
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const name = e.target.name;
@@ -18,11 +21,12 @@ function Login( {updateUserDetails } ) {
       [name]: value
     });
 
-    
     setErrors((prevErrors) => ({
       ...prevErrors,
       [name]: ''
     }));
+
+    setMessage(null);
   };
 
   const validate = () => {
@@ -43,30 +47,41 @@ function Login( {updateUserDetails } ) {
     return isValid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validate()) {
-      if (
-        formData.username === 'admin' &&
-        formData.password === 'admin'
-      ) {
-        updateUserDetails({
-          name: 'john cena',
-          email: 'john@cena.com'
-        });
-        // setMessage(" Valid Credentials");
-      } else {
-        setMessage("Invalid Credentials");
+      const body = {
+        username: formData.username,
+        password: formData.password
+      };
+
+      try {
+        const response = await axios.post(
+          "http://localhost:5001/auth/login",
+          body,
+          { withCredentials: true }
+        );
+
+        if (response.data && response.data.user) {
+          updateUserDetails(response.data.user);
+          setMessage("Login successful!");
+          navigate("/dashboard");
+        } else {
+          setErrors({ message: "Invalid credentials" });
+        }
+
+      } catch (error) {
+        console.log(error);
+        setErrors({ message: "Something went wrong, please try again" });
       }
-    } else {
-      setMessage(null); 
     }
   };
 
   return (
     <div className="container text-center">
       {message && <p style={{ fontWeight: "bold" }}>{message}</p>}
+      {errors.message && <p style={{ color: "red" }}>{errors.message}</p>}
 
       <h1>Login Page</h1>
       <form onSubmit={handleSubmit}>
