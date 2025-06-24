@@ -8,6 +8,7 @@ import Logout from "./pages/Logout";
 import Error from "./pages/Error";
 import AppLayout from "./layout/AppLayout";
 import axios from "axios";
+import Register from "./pages/Register";
 
 function App() {
   const [userDetails, setUserDetails] = useState(null);
@@ -48,6 +49,19 @@ function App() {
           )
         }
       />
+
+      <Route
+  path="/register"
+  element={
+    userDetails ? (
+      <Navigate to="/dashboard" />
+    ) : (
+      <AppLayout>
+        <Register />
+      </AppLayout>
+    )
+  }
+/>
 
       <Route
         path="/login"
