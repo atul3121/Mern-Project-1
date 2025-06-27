@@ -1,12 +1,9 @@
-import React from 'react'
-
 function Footer() {
   return (
-    <div className='container-fluid text-center'>
-
-  <p>I am footer.</p>
+    <div className="container-fluid bg-light text-center py-3">
+      All rights reserved.
     </div>
-  )
+  );
 }
 
-export default Footer
+export default Footer;

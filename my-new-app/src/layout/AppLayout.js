@@ -18,13 +18,13 @@
 import React from 'react';
 import Header from './Header'; 
 import Footer from './Footer';
-import Navigation1 from './Navigation1'; 
+// import Navigation1 from './Navigation1'; 
 
 function AppLayout({ children }) {
   return (
     <>
      
-      <Navigation1 />
+    
 
       
       <Header />

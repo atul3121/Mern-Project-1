@@ -1,13 +1,29 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 function Header() {
   return (
-    <div>
-         <Link to="/" style={{ marginRight: '10px' }}>Home</Link>
-         <Link to="/Login">Login</Link>
-    </div>
-  )
+    <nav className="navbar navbar-expand-lg bg-body-tertiary border-bottom border-body">
+      <div className="container-fluid">
+        <Link className="navbar-brand" to="/">MyApp</Link>
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+          <span className="navbar-toggler-icon" />
+        </button>
+        <div className="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            <li className="nav-item">
+              <Link className="nav-link active" to="/">Home</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/login">Login</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/register">Register</Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  );
 }
 
-export default Header
+export default Header;
