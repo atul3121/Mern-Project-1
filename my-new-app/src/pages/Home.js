@@ -1,4 +1,9 @@
 function Home() {
-  return <div>Home Page</div>;
+    return (
+        <div className="container text-center">
+            <h1>Welcome to MERN Projects</h1>
+        </div>
+    );
 }
+
 export default Home;

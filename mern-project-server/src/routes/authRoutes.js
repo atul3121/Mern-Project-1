@@ -1,6 +1,5 @@
 const express = require('express');
 const authController = require('../controller/authController');
-const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router(); // Instance of Router
 const { body } = require('express-validator');
 
@@ -18,8 +17,5 @@ router.post('/logout', authController.logout);
 router.post('/is-user-logged-in', authController.isUserLoggedIn);
 router.post('/register', authController.register);
 router.post('/google-auth', authController.googleAuth);
-router.get('/profile', authMiddleware.protect, (req, res) => {
-    res.json({ user: req.user });
-});
 
 module.exports = router;

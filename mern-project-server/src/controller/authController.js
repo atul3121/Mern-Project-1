@@ -33,7 +33,10 @@ const authController = {
             const user = {
                 id: data._id,
                 name: data.name,
-                email: data.email
+                email: data.email,
+                role: data.role ? data.role : 'admin',
+                adminId: data.adminId,
+                credits: data.credits
             };
 
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
@@ -51,51 +54,66 @@ const authController = {
     },
 
     logout: (request, response) => {
-        response.clearCookie('jwtToken', {
-            httpOnly: true,
-            sameSite: 'lax',
-            path: '/'
-        });
+        response.clearCookie('jwtToken');
         response.json({ message: 'Logout successfull' });
     },
 
-    isUserLoggedIn: (request, response) => {
+    isUserLoggedIn: async (request, response) => {
         const token = request.cookies.jwtToken;
 
         if (!token) {
             return response.status(401).json({ message: 'Unauthorized access' });
         }
 
-        jwt.verify(token, secret, (error, user) => {
+        jwt.verify(token, secret, async (error, user) => {
             if (error) {
                 return response.status(401).json({ message: 'Unauthorized access' });
             } else {
-                response.json({ message: 'User is logged in', user: user });
+                const latestUserDetails = await Users.findById({ _id: user.id });
+                response.json({ message: 'User is logged in', user: latestUserDetails });
             }
         });
     },
 
     register: async (request, response) => {
         try {
+            // Extract attributes from the request body
             const { username, password, name } = request.body;
-            const data = await Users.findOne({ username });
+
+            // Firstly check if user already exist with the given email
+            const data = await Users.findOne({ email: username });
             if (data) {
                 return response.status(401)
-                    .json({ message: 'Account already exists with given username' });
+                    .json({ message: 'Account already exist with given email' });
             }
+
+            // Encrypt the password before saving the record to the database
             const encryptedPassword = await bcrypt.hash(password, 10);
+
+            // Create mongoose model object and set the record values
             const user = new Users({
-                username,
                 email: username,
                 password: encryptedPassword,
-                name: name
+                name: name,
+                role: 'admin'
             });
             await user.save();
+            const userDetails = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                credits: user.credits
+            };
+            const token = jwt.sign(userDetails, secret, { expiresIn: '1h' });
 
-            // Do NOT set JWT cookie here
-            // Do NOT return user object
-
-            response.status(200).json({ message: 'User registered successfully. Please log in.' });
+            response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                path: '/'
+            });
+            response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
             console.log(error);
             return response.status(500).json({ error: 'Internal Server Error' });
@@ -106,7 +124,7 @@ const authController = {
         try {
             const { idToken } = request.body;
             if (!idToken) {
-                return response.status(401).json({ message: 'Invalid request'});
+                return response.status(401).json({ message: 'Invalid request' });
             }
 
             const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -121,19 +139,21 @@ const authController = {
             let data = await Users.findOne({ email: email });
             if (!data) {
                 data = new Users({
-                    username: email, // <-- ADD THIS LINE
                     email: email,
                     name: name,
                     isGoogleUser: true,
-                    googleId: googleId
+                    googleId: googleId,
+                    role: 'admin'
                 });
                 await data.save();
             }
 
             const user = {
-                id: data._id? data._id : googleId,
+                id: data._id ? data._id : googleId,
                 username: email,
-                name: name
+                name: name,
+                role: data.role ? data.role : 'admin', // This is the ensure backward compatibility
+                credits: data.credits
             };
 
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
