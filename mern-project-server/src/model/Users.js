@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// 📦 Embedded Subscription Schema
 const subscriptionSchema = new mongoose.Schema({
     id: { type: String }, // Razorpay subscription ID
     planId: { type: String },
@@ -22,8 +21,6 @@ const UsersSchema = new mongoose.Schema({
     role: { type: String, default: 'admin' },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', index: true },
     credits: { type: Number, default: 0 },
-    
-    // ✅ Subscription field added
     subscription: { type: subscriptionSchema, default: () => ({}) }
 });
 
