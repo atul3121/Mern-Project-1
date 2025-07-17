@@ -64,6 +64,7 @@ const paymentController = {
 
             response.json({ user: user });
         } catch (error) {
+            console.error("yha dikkat h");
             console.log(error);
             response.status(500).json({
                 message: 'Internal server error'

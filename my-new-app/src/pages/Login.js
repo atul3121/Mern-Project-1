@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { serverEndpoint } from "../config/config";
 import { useDispatch } from "react-redux";
 import { SET_USER } from "../redux/user/actions";
+import { Link } from "react-router-dom";
 
 function Login() {
     const dispatch = useDispatch();
@@ -45,13 +47,11 @@ function Login() {
         e.preventDefault();
 
         if (validate()) {
-            // Data to be sent to the server
             const body = {
                 username: formData.username,
                 password: formData.password
             };
             const config = {
-                // Tells axios to include cookie in the request + some other auth headers
                 withCredentials: true
             };
             try {
@@ -80,13 +80,13 @@ function Login() {
             });
         } catch (error) {
             console.log(error);
-            setErrors({ message: 'Error processing google auth, please try again' });
+            setErrors({ message: 'Error processing Google auth, please try again' });
         }
     };
 
     const handleGoogleError = async (error) => {
         console.log(error);
-        setErrors({ message: 'Error in google authorization flow, please try again' });
+        setErrors({ message: 'Error in Google authorization flow, please try again' });
     }
 
     return (
@@ -137,8 +137,15 @@ function Login() {
                             )}
                         </div>
 
-                        <div className="d-grid">
+                        <div className="d-grid mb-2">
                             <button type="submit" className="btn btn-primary">Submit</button>
+                        </div>
+
+                        {/* Forgot Password Link */}
+                        <div className="text-end">
+                            <Link to="/forgot-password" className="text-decoration-none">
+                                Forgot Password?
+                            </Link>
                         </div>
                     </form>
 

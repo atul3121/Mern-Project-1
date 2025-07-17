@@ -1,11 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { CREDIT_PACKS, PLAN_IDS, pricingList } from "../../config/payments";
 import { useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { serverEndpoint } from "../../config/config";
 import { SET_USER } from "../../redux/user/actions";
 import './PurchaseCredit.css';
 import { Modal } from "react-bootstrap";
+import axios from "axios";
 
 function PurchaseCredit() {
     const dispatch = useDispatch();
@@ -20,7 +21,7 @@ function PurchaseCredit() {
             const { data } = await axios.post(`${serverEndpoint}/payments/create-order`, {
                 credits
             }, { withCredentials: true });
-
+            console.log('ORDER DATA:', data);   
             const options = {
                 key: process.env.REACT_APP_RAZORPAY_KEY_ID,
                 amount: data.order.amount,
@@ -43,8 +44,12 @@ function PurchaseCredit() {
                         });
                         setMessage(`${credits} credits added!`);
                     } catch (error) {
+                         console.error('AXIOS ERROR:', error.message);
+                        console.error('STATUS:', error.response?.status);
+                         console.error('RESPONSE:', error.response?.data);
+                        console.error("Error verifying order:", error);
                         console.error(error);
-                        setErrors({ message: 'Unable to purchase credits, please try again' });
+                        setErrors({ message: 'Unable to purchase credits, please try again later' });
                     }
                 },
                 theme: { color: '#3399cc' }

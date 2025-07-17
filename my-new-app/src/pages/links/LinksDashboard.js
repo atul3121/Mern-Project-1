@@ -1,3 +1,4 @@
+
 import IconButton from '@mui/material/IconButton';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
@@ -9,22 +10,21 @@ import { serverEndpoint } from '../../config/config';
 import { Modal } from 'react-bootstrap';
 import { usePermission } from '../../rbac/userPermissions';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 function LinksDashboard() {
     const [errors, setErrors] = useState({});
     const [linksData, setLinksData] = useState([]);
     const navigate = useNavigate();
+    const userDetails = useSelector((state) => state.userDetails);
 
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
-
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const permission = usePermission();
 
     const handleShowDeleteModal = (linkId) => {
-        setFormData({
-            id: linkId
-        });
+        setFormData({ id: linkId });
         setShowDeleteModal(true);
     };
 
@@ -53,7 +53,6 @@ function LinksDashboard() {
                 category: data.category
             });
         }
-
         setIsEdit(isEdit);
         setShowModal(true);
     };
@@ -81,6 +80,7 @@ function LinksDashboard() {
     const validate = () => {
         let newErrors = {};
         let isValid = true;
+
         if (formData.campaignTitle.length === 0) {
             newErrors.campaignTitle = "Campaign Title is mandatory";
             isValid = false;
@@ -98,7 +98,7 @@ function LinksDashboard() {
 
         setErrors(newErrors);
         return isValid;
-    }
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -109,18 +109,13 @@ function LinksDashboard() {
                 original_url: formData.originalUrl,
                 category: formData.category
             };
-            const configuration = {
-                withCredentials: true
-            };
+            const configuration = { withCredentials: true };
+
             try {
                 if (isEdit) {
-                    await axios.put(
-                        `${serverEndpoint}/links/${formData.id}`,
-                        body, configuration);
+                    await axios.put(`${serverEndpoint}/links/${formData.id}`, body, configuration);
                 } else {
-                    await axios.post(
-                        `${serverEndpoint}/links`,
-                        body, configuration);
+                    await axios.post(`${serverEndpoint}/links`, body, configuration);
                 }
 
                 await fetchLinks();
@@ -149,6 +144,22 @@ function LinksDashboard() {
         }
     };
 
+    const handleResetPasswordRequest = async () => {
+        try {
+            await axios.post(
+                `${serverEndpoint}/auth/send-reset-password-token`,
+                { email: userDetails?.email },
+                { withCredentials: true }
+            );
+            navigate("/reset-password", {
+                state: { email: userDetails.email }
+            });
+        } catch (error) {
+            console.error(error);
+            alert("Failed to send reset code. Try again later.");
+        }
+    };
+
     useEffect(() => {
         fetchLinks();
     }, []);
@@ -157,33 +168,28 @@ function LinksDashboard() {
         { field: 'campaignTitle', headerName: 'Campaign', flex: 2 },
         {
             field: 'originalUrl', headerName: 'URL', flex: 3, renderCell: (params) => (
-                <>
-                    <a href={`${serverEndpoint}/links/r/${params.row._id}`}
-                        target='_blank'
-                        rel="noopener noreferrer"
-                    >
-                        {params.row.originalUrl}
-                    </a>
-                </>
+                <a href={`${serverEndpoint}/links/r/${params.row._id}`}
+                   target='_blank'
+                   rel="noopener noreferrer">
+                    {params.row.originalUrl}
+                </a>
             )
         },
         { field: 'category', headerName: 'Category', flex: 2 },
         { field: 'clickCount', headerName: 'Clicks', flex: 1 },
         {
-            field: 'action', headerName: 'Clicks', flex: 1, renderCell: (params) => (
+            field: 'action', headerName: 'Actions', flex: 1, renderCell: (params) => (
                 <>
                     {permission.canEditLink && (
                         <IconButton>
                             <EditIcon onClick={() => handleOpenModal(true, params.row)} />
                         </IconButton>
                     )}
-
                     {permission.canDeleteLink && (
                         <IconButton>
                             <DeleteIcon onClick={() => handleShowDeleteModal(params.row._id)} />
                         </IconButton>
                     )}
-
                     {permission.canViewLink && (
                         <IconButton>
                             <AssessmentIcon onClick={() => {
@@ -200,11 +206,17 @@ function LinksDashboard() {
         <div className="container py-4">
             <div className="d-flex justify-content-between mb-3">
                 <h2>Manage Affiliate Links</h2>
-                {permission.canCreateLink && (
-                    <button className="btn btn-primary btn-sm" onClick={() => handleOpenModal(false)}>
-                        Add
-                    </button>
-                )}
+                <div>
+                   
+                    {permission.canCreateLink && (
+                        <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleOpenModal(false)}
+                        >
+                            Add
+                        </button>
+                    )}
+                </div>
             </div>
 
             {errors.message && (
@@ -225,21 +237,15 @@ function LinksDashboard() {
                     }}
                     pageSizeOptions={[20, 50, 100]}
                     disableRowSelectionOnClick
-                    showToolbar
-                    sx={{
-                        fontFamily: 'inherit'
-                    }}
                     density='compact'
+                    sx={{ fontFamily: 'inherit' }}
                 />
             </div>
 
-            <Modal show={showModal} onHide={() => handleCloseModal()}>
+            <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>
-                        {isEdit ? (<>Update Link</>) : (<>Add Link</>)}
-                    </Modal.Title>
+                    <Modal.Title>{isEdit ? "Update Link" : "Add Link"}</Modal.Title>
                 </Modal.Header>
-
                 <Modal.Body>
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
@@ -253,9 +259,7 @@ function LinksDashboard() {
                                 onChange={handleChange}
                             />
                             {errors.campaignTitle && (
-                                <div className="invalid-feedback">
-                                    {errors.campaignTitle}
-                                </div>
+                                <div className="invalid-feedback">{errors.campaignTitle}</div>
                             )}
                         </div>
 
@@ -270,9 +274,7 @@ function LinksDashboard() {
                                 onChange={handleChange}
                             />
                             {errors.originalUrl && (
-                                <div className="invalid-feedback">
-                                    {errors.originalUrl}
-                                </div>
+                                <div className="invalid-feedback">{errors.originalUrl}</div>
                             )}
                         </div>
 
@@ -287,9 +289,7 @@ function LinksDashboard() {
                                 onChange={handleChange}
                             />
                             {errors.category && (
-                                <div className="invalid-feedback">
-                                    {errors.category}
-                                </div>
+                                <div className="invalid-feedback">{errors.category}</div>
                             )}
                         </div>
 
@@ -300,7 +300,7 @@ function LinksDashboard() {
                 </Modal.Body>
             </Modal>
 
-            <Modal show={showDeleteModal} onHide={() => handleCloseDeleteModal()}>
+            <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Confirm Delete</Modal.Title>
                 </Modal.Header>
@@ -308,16 +308,8 @@ function LinksDashboard() {
                     <p>Are you sure you want to delete the link?</p>
                 </Modal.Body>
                 <Modal.Footer>
-                    <button className='btn btn-secondary'
-                        onClick={() => handleCloseDeleteModal()}
-                    >
-                        Cancel
-                    </button>
-                    <button className='btn btn-danger'
-                        onClick={() => handleDelete()}
-                    >
-                        Delete
-                    </button>
+                    <button className='btn btn-secondary' onClick={handleCloseDeleteModal}>Cancel</button>
+                    <button className='btn btn-danger' onClick={handleDelete}>Delete</button>
                 </Modal.Footer>
             </Modal>
         </div>

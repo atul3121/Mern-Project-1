@@ -1,7 +1,8 @@
+
 const mongoose = require('mongoose');
 
 const subscriptionSchema = new mongoose.Schema({
-    id: { type: String }, // Razorpay subscription ID
+    id: { type: String },
     planId: { type: String },
     status: { type: String, default: 'pending' },
     start: { type: Date },
@@ -19,9 +20,13 @@ const UsersSchema = new mongoose.Schema({
     isGoogleUser: { type: String, required: false },
     googleId: { type: String, required: false },
     role: { type: String, default: 'admin' },
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', index: true },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'users', index: true },
     credits: { type: Number, default: 0 },
-    subscription: { type: subscriptionSchema, default: () => ({}) }
+    subscription: { type: subscriptionSchema, default: () => ({}) },
+
+    //  New fields for password reset
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('users', UsersSchema);

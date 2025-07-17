@@ -1,10 +1,11 @@
+
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Users = require('../model/Users');
 const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
+const { sendMail } = require('../service/emailService');
 
-// https://www.uuidgenerator.net/
 const secret = process.env.JWT_SECRET;
 
 const authController = {
@@ -15,11 +16,7 @@ const authController = {
                 return response.status(401).json({ errors: errors.array() });
             }
 
-            // The body contains username and password because of the express.json()
-            // middleware configured in the server.js
             const { username, password } = request.body;
-
-            // Call Database to fetch user by the email
             const data = await Users.findOne({ email: username });
             if (!data) {
                 return response.status(401).json({ message: 'Invalid credentials ' });
@@ -34,7 +31,7 @@ const authController = {
                 id: data._id,
                 name: data.name,
                 email: data.email,
-                role: data.role ? data.role : 'admin',
+                role: data.role || 'admin',
                 adminId: data.adminId,
                 credits: data.credits,
                 subscription: data.subscription
@@ -47,7 +44,7 @@ const authController = {
                 domain: 'localhost',
                 path: '/'
             });
-            response.json({ user: user, message: 'User authenticated' });
+            response.json({ user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
             response.status(500).json({ error: 'Internal server error' });
@@ -56,12 +53,11 @@ const authController = {
 
     logout: (request, response) => {
         response.clearCookie('jwtToken');
-        response.json({ message: 'Logout successfull' });
+        response.json({ message: 'Logout successful' });
     },
 
     isUserLoggedIn: async (request, response) => {
         const token = request.cookies.jwtToken;
-
         if (!token) {
             return response.status(401).json({ message: 'Unauthorized access' });
         }
@@ -78,20 +74,14 @@ const authController = {
 
     register: async (request, response) => {
         try {
-            // Extract attributes from the request body
             const { username, password, name } = request.body;
-
-            // Firstly check if user already exist with the given email
             const data = await Users.findOne({ email: username });
             if (data) {
-                return response.status(401)
-                    .json({ message: 'Account already exist with given email' });
+                return response.status(401).json({ message: 'Account already exists with given email' });
             }
 
-            // Encrypt the password before saving the record to the database
             const encryptedPassword = await bcrypt.hash(password, 10);
 
-            // Create mongoose model object and set the record values
             const user = new Users({
                 email: username,
                 password: encryptedPassword,
@@ -99,6 +89,7 @@ const authController = {
                 role: 'admin'
             });
             await user.save();
+
             const userDetails = {
                 id: user._id,
                 name: user.name,
@@ -150,10 +141,10 @@ const authController = {
             }
 
             const user = {
-                id: data._id ? data._id : googleId,
+                id: data._id || googleId,
                 username: email,
                 name: name,
-                role: data.role ? data.role : 'admin', // This is the ensure backward compatibility
+                role: data.role || 'admin',
                 credits: data.credits
             };
 
@@ -164,12 +155,76 @@ const authController = {
                 domain: 'localhost',
                 path: '/'
             });
-            response.json({ user: user, message: 'User authenticated' });
+            response.json({ user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
             return response.status(500).json({ message: 'Internal server error' });
         }
     },
+
+    // ✅ (1) Send Reset Password Code
+    sendResetPasswordToken: async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            if (!email) return res.status(400).json({ message: "Email is required" });
+
+            const user = await Users.findOne({ email });
+            if (!user) return res.status(404).json({ message: "User not found" });
+
+            const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const expiryTime = Date.now() + 15 * 60 * 1000;
+
+            user.resetPasswordToken = resetCode;
+            user.resetPasswordExpires = new Date(expiryTime);
+            await user.save();
+
+            await sendMail(
+                email,
+                "Reset Your Password",
+                `Your password reset code is: ${resetCode}. It expires in 15 minutes.`
+            );
+
+            res.status(200).json({ message: "Reset code sent to your email" });
+        } catch (err) {
+            console.error("Error in sendResetPasswordToken:", err);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
+    // ✅ (2) Reset Password
+    resetPassword: async (req, res) => {
+        try {
+            const { email, code, newPassword } = req.body;
+
+            if (!email || !code || !newPassword) {
+                return res.status(400).json({ message: "All fields are required" });
+            }
+
+            const user = await Users.findOne({ email });
+
+            if (
+                !user ||
+                !user.resetPasswordToken ||
+                !user.resetPasswordExpires ||
+                user.resetPasswordToken !== code ||
+                user.resetPasswordExpires < new Date()
+            ) {
+                return res.status(400).json({ message: "Invalid or expired reset code" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            user.password = hashedPassword;
+            user.resetPasswordToken = null;
+            user.resetPasswordExpires = null;
+            await user.save();
+
+            res.status(200).json({ message: "Password reset successful" });
+        } catch (err) {
+            console.error("Error in resetPassword:", err);
+            res.status(500).json({ message: "Server error" });
+        }
+    }
 };
 
 module.exports = authController;
