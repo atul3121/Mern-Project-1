@@ -54,8 +54,9 @@ const authController = {
         response.clearCookie('jwtToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-            path: '/'
+            path: '/',
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+            
         });
         response.json({ message: 'Logout successful' });
     },
@@ -106,8 +107,9 @@ const authController = {
             response.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-                path: '/'
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+                
             });
             response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
@@ -156,8 +158,9 @@ const authController = {
             response.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-                path: '/'
+                path: '/',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+                
             });
             response.json({ user, message: 'User authenticated' });
         } catch (error) {
