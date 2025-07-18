@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Users = require('../model/Users');
@@ -7,6 +6,16 @@ const { validationResult } = require('express-validator');
 const { sendMail } = require('../service/emailService');
 
 const secret = process.env.JWT_SECRET;
+
+// Reusable function for setting JWT cookie
+const setAuthCookie = (response, token) => {
+    response.cookie('jwtToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        path: '/',
+    });
+};
 
 const authController = {
     login: async (request, response) => {
@@ -19,12 +28,12 @@ const authController = {
             const { username, password } = request.body;
             const data = await Users.findOne({ email: username });
             if (!data) {
-                return response.status(401).json({ message: 'Invalid credentials ' });
+                return response.status(401).json({ message: 'Invalid credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, data.password);
             if (!isMatch) {
-                return response.status(401).json({ message: 'Invalid credentials ' });
+                return response.status(401).json({ message: 'Invalid credentials' });
             }
 
             const user = {
@@ -38,12 +47,7 @@ const authController = {
             };
 
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
-            });
+            setAuthCookie(response, token);
             response.json({ user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
@@ -52,7 +56,12 @@ const authController = {
     },
 
     logout: (request, response) => {
-        response.clearCookie('jwtToken');
+        response.clearCookie('jwtToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+            path: '/',
+        });
         response.json({ message: 'Logout successful' });
     },
 
@@ -99,12 +108,7 @@ const authController = {
             };
             const token = jwt.sign(userDetails, secret, { expiresIn: '1h' });
 
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
-            });
+            setAuthCookie(response, token);
             response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
             console.log(error);
@@ -149,12 +153,7 @@ const authController = {
             };
 
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
-            });
+            setAuthCookie(response, token);
             response.json({ user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
